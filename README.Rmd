@@ -65,7 +65,8 @@ dst <- coords %>%
 df <- flows %>%
   left_join(src, by = 'reporter') %>%
   left_join(dst, by = 'partner', suffix = c('_src','_dst')) %>%
-  filter(complete.cases(.))
+  filter(complete.cases(.),
+         partner != 'World')
 
 world1 <- sf::st_as_sf(maps::map('world', plot = FALSE, fill = TRUE))
 
@@ -97,3 +98,43 @@ ggplot(df) +
 
 ![](images/first_attempt.gif)
 
+
+### Convert Great Circle to points
+
+```{r points}
+
+library(geosphere)
+#greatCircle(c(df$x_src[1], df$y_src[1]), c(df$x_dst[1], df$y_dst[1]), n=360, sp=FALSE)
+
+# finter to single month for now
+
+mar <- df %>% 
+  as_tibble() %>%
+  filter(period == 201803) 
+
+mar_pts <- lapply(1:nrow(mar), function(r){
+  
+  row = mar[r,]
+  
+  pts <- greatCircle(c(row$x_src, row$y_src), c(row$x_dst, row$y_dst), n=360, sp=FALSE) %>%
+    as.data.frame() %>%
+    mutate(year = row$year,
+           period = row$period,
+           group = r,
+           n = 1:360,
+           reporter = row$reporter,
+           partner = row$partner,
+           netweight_kg = row$netweight_kg)
+    
+}) %>% plyr::ldply()
+
+
+
+ggplot(mar_pts, aes(x = 'lon', y = 'lat')) + 
+  geom_sf(data = world1) +
+  geom_point() +
+  transition_reveal(id=group, along=n)
+
+
+
+```
