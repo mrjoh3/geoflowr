@@ -1,3 +1,5 @@
+^data-raw$
+^README\.Rmd$
 ^LICENSE\.md$
 ^geoflowr\.Rproj$
 ^\.Rproj\.user$
