@@ -27,8 +27,10 @@ creates a plot similar
 
 library(ggplot2)
 library(readr)
+library(purrr)
 library(dplyr)
 library(sf)
+library(gganimate)
 
 coords <- read_csv('data-raw/world.csv') %>% 
   filter(!is.na(admin)) %>%
@@ -36,7 +38,9 @@ coords <- read_csv('data-raw/world.csv') %>%
          x = Longitude, 
          y = Latitude)
 
-flows <- read_csv('data-raw/201802.csv') %>%
+#flows <- read_csv('data-raw/201802.csv') %>%
+flows <- map_df(list.files(path = "data-raw", pattern = "[0-9].csv", full.names = TRUE), 
+                 read_csv, col_names = TRUE) %>%
   select(year,
          period,
          reporter,
@@ -64,10 +68,16 @@ world1 <- sf::st_as_sf(maps::map('world', plot = FALSE, fill = TRUE))
 
 ggplot(df) + 
   geom_sf(data = world1) +
-  geom_curve(aes(x = x_src, y = y_src, xend = x_dst, yend = y_dst, size = log10(netweight_kg)),
+  geom_curve(aes(x = x_src, y = y_src, xend = x_dst, yend = y_dst, 
+                 alpha = 0.5,
+                 size = netweight_kg / max(df$netweight_kg)),
              #curvature = 0.75, angle = -45,
-             arrow = arrow(length = unit(0.25,"cm"))) +
-  theme_minimal()
+             arrow = arrow(length = unit(0.15,"cm"))
+             ) +
+  theme_void() + 
+  theme(legend.position="none") +
+  transition_time(period) +
+  ease_aes('linear')
 ```
 
-<img src="man/figures/README-geom_curve-1.png" width="100%" />
+![](images/first_attempt.gif)
