@@ -1,8 +1,15 @@
 Package: geoflowr
-Title: What the Package Does (one line, title case)
+Title: Geographic Flows
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person("Gabriela", "D'Souza", email = "g.dsouza0191@gmail.com",
+           role = c("aut", "cre")),
+    person("Radoslaw", "Panczak", email = "r.panczak@gmail.com",
+           role = c("aut", "cre")),
+    person("Matt", "Johnson", email = "mrjoh3@gmail.com",
+           role = c("aut", "cre"))
+    )
+Description: Exploration of geographic flows methods.
 Depends: R (>= 3.5.1)
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -12,3 +19,8 @@ Suggests:
 RoxygenNote: 6.1.0
 Imports: 
     ggplot2
+Collate: 
+    'geom-segment.r'
+    'geom-great-circle.R'
+    'geom_segment_plus.R'
+    'mapdeck.R'
