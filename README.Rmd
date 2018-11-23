@@ -141,7 +141,6 @@ ggplot() +
   ease_aes('linear')
 
 
-
 ```
 
 
@@ -176,12 +175,44 @@ mapview::mapview(mar_sf)@map
 
 ```{r, eval=FALSE}
 
-ggplot(mar_sf) + 
+# wrld_wrap <- st_wrap_dateline(mar_sf, options = c("WRAPDATELINE=YES", "DATELINEOFFSET=180"),
+#    quiet = TRUE)
+
+ggplot() + 
   geom_sf(data = world1) +
   geom_sf(data = mar_sf) +
   theme_void() +
   transition_components('reporter') +
   ease_aes('linear')
 
+
+```
+
+
+### Errors at Poles and Map borders
+
+Using these methods great circle lines and point annimations appear distorted at the poles and the borders of the map. To avoid this we propose using destination and source points to draw a complete great circle. This line can then be split where the line is intersected resulting two lines. Each line can be checked for proximity to these map regions and excluded where nesecary.
+
+The method is outlined below, but there is an issue with using `st_split()` on a windows machine.  
+
+```{r, fig.width=11}
+
+src <- c(df$x_src[2], df$y_src[2])
+dst <- c(df$x_dst[2], df$y_dst[2])
+gc <- greatCircle(src, dst, n=16, sp=FALSE)
+
+gcl = st_sfc(st_linestring(gc), crs = 4283)
+mp <- st_sfc(st_multipoint(rbind(src,dst)), crs = 4283)
+
+#mp2 = st_snap(mp, gcl, 1) # move points to intersect gcl line
+
+# then use st_split(gcl, mp2) but requires lwgeom which is not working on windows....
+
+
+ggplot() + 
+  geom_sf(data = world1) +
+  geom_sf(data = gcl, size = 2.5) +
+  geom_sf(data = mp, colour = "red", fill = "red", size = 10) +
+  theme_void()
 
 ```
