@@ -159,6 +159,9 @@ line <- t3 %>%
 
 rm(t1, t2, t3)
 
+# poles???
+plot(st_geometry(st_segmentize(line, dfMaxLength = 1000)))
+
 plot(st_geometry(orig_buffer))
 plot(st_geometry(dest_buffer), add = TRUE)
 plot(st_geometry(orig), add = TRUE)
@@ -170,14 +173,14 @@ line_short <- line %>%
   st_difference(st_union(st_combine(orig_buffer))) %>%
   st_difference(st_union(st_combine(dest_buffer)))
 
-st_line_sample(line_short, sample = 0)
-
-plot(st_geometry(st_segmentize(line_short, dfMaxLength = 100)))
-
 plot(line_short, col = "red", add = TRUE)
 
-line_curve_from <- data.frame(x1 = line_short[1], x2 = line_short[3],
-                              y1 = line_short[2], y2 = line_short[4])
+# findint new start and en
+# st_line_sample(line_short, sample = 0) # doesnt work with lat long
+
+t <- st_line_sample(st_segmentize(line_short, dfMaxLength = 1000), sample=c(0,1))
+
+# line_curve_from <-
 
 ggplot() +
   geom_curve(data = line_curve_from, aes(x=x1, y=x2, xend=y1, yend=y2),
@@ -188,3 +191,5 @@ ggplot() +
   geom_sf(data = dest_buffer) +
   # geom_sf(data = line_short, size = 1) +
   ylim(c(10, 80)) + xlab("") + ylab("")
+
+# ggsave("./images/arrows_solved.png")
