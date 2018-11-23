@@ -57,7 +57,8 @@ dst <- coords %>%
 df <- flows %>%
   left_join(src, by = 'reporter') %>%
   left_join(dst, by = 'partner', suffix = c('_src','_dst')) %>%
-  filter(complete.cases(.))
+  filter(complete.cases(.),
+         partner != 'World')
 
 world1 <- sf::st_as_sf(maps::map('world', plot = FALSE, fill = TRUE))
 ```
@@ -81,3 +82,77 @@ ggplot(df) +
 ```
 
 ![](images/first_attempt.gif)
+
+### Convert Great Circle to points
+
+``` r
+
+library(geosphere)
+#greatCircle(c(df$x_src[1], df$y_src[1]), c(df$x_dst[1], df$y_dst[1]), n=360, sp=FALSE)
+
+# finter to single month for now
+
+mar <- df %>% 
+  as_tibble() %>%
+  filter(period == 201803) 
+
+mar_pts <- lapply(1:nrow(mar), function(r){
+  
+  row = mar[r,]
+  
+  pts <- gcIntermediate(c(row$x_src, row$y_src), c(row$x_dst, row$y_dst), n=36, sp=FALSE, breakAtDateLine = F) %>%
+    as.data.frame() %>%
+    mutate(year = row$year,
+           period = row$period,
+           group = r,
+           n = 1:36,
+           reporter = row$reporter,
+           partner = row$partner,
+           netweight_kg = row$netweight_kg)
+    
+}) %>% plyr::ldply()
+```
+
+``` r
+
+ggplot() + 
+  geom_sf(data = world1) +
+  geom_line(data = mar_pts, aes(x = lon, y = lat, group = group)) +
+  theme_void() +
+  transition_reveal(id = group, along = n) +
+  ease_aes('linear')
+```
+
+![](images/third_attempt.gif)
+
+``` r
+
+filter(mar_pts, lat < )
+```
+
+### Convert to SF object
+
+``` r
+
+# https://www.jessesadler.com/post/great-circles-sp-sf/
+
+mar_sf <- mar %>%
+  rowwise() %>%
+  mutate(line = st_sfc(st_linestring(gcIntermediate(c(x_src, y_src), c(x_dst, y_dst), n=36, sp=FALSE, breakAtDateLine = F), dim = 'XY'))) %>%
+  st_as_sf(sf_column_name = 'line', crs = 4283)
+
+
+mapview::mapview(mar_sf)@map
+```
+
+<img src="man/figures/README-sf-1.png" width="100%" />
+
+``` r
+
+ggplot(mar_sf) + 
+  geom_sf(data = world1) +
+  geom_sf(data = mar_sf) +
+  theme_void() +
+  transition_components('reporter') +
+  ease_aes('linear')
+```

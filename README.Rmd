@@ -116,25 +116,72 @@ mar_pts <- lapply(1:nrow(mar), function(r){
   
   row = mar[r,]
   
-  pts <- greatCircle(c(row$x_src, row$y_src), c(row$x_dst, row$y_dst), n=360, sp=FALSE) %>%
+  pts <- gcIntermediate(c(row$x_src, row$y_src), c(row$x_dst, row$y_dst), n=36, sp=FALSE, breakAtDateLine = F) %>%
     as.data.frame() %>%
     mutate(year = row$year,
            period = row$period,
            group = r,
-           n = 1:360,
+           n = 1:36,
            reporter = row$reporter,
            partner = row$partner,
            netweight_kg = row$netweight_kg)
     
 }) %>% plyr::ldply()
 
+```
 
 
-ggplot(mar_pts, aes(x = 'lon', y = 'lat')) + 
+```{r, eval=FALSE}
+
+ggplot() + 
   geom_sf(data = world1) +
-  geom_point() +
-  transition_reveal(id=group, along=n)
+  geom_line(data = mar_pts, aes(x = lon, y = lat, group = group)) +
+  theme_void() +
+  transition_reveal(id = group, along = n) +
+  ease_aes('linear')
 
+
+
+```
+
+
+![](images/third_attempt.gif)
+
+
+```{r, eval = FALSE}
+
+filter(mar_pts, lat < )
+
+
+```
+
+### Convert to SF object
+
+```{r sf, fig.width=11}
+
+# https://www.jessesadler.com/post/great-circles-sp-sf/
+
+mar_sf <- mar %>%
+  rowwise() %>%
+  mutate(line = st_sfc(st_linestring(gcIntermediate(c(x_src, y_src), c(x_dst, y_dst), n=36, sp=FALSE, breakAtDateLine = F), dim = 'XY'))) %>%
+  st_as_sf(sf_column_name = 'line', crs = 4283)
+
+
+mapview::mapview(mar_sf)@map
+
+
+
+
+```
+
+```{r, eval=FALSE}
+
+ggplot(mar_sf) + 
+  geom_sf(data = world1) +
+  geom_sf(data = mar_sf) +
+  theme_void() +
+  transition_components('reporter') +
+  ease_aes('linear')
 
 
 ```
