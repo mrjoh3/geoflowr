@@ -26,11 +26,11 @@ server <- function(input, output) {
     }
 
     isolate({
-      val$x <- input$imageClick$x
+      val$x <- input$imageClick$x # c(val$x, input$rasterClick$x) use two clicks to creat XY points
       val$y <- input$imageClick$y
     })
 
-    output$text <- renderText({paste0('X: ', val$x, '--', 'Y: ', val$y)})
+    output$text <- renderText({paste0('X: ', val$x, ' -- ', 'Y: ', val$y)})
   })
 
   output$image <- renderImage({
