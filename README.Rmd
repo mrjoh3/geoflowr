@@ -26,7 +26,7 @@ devtools::install_github("ropenscilabs/geoflowr")
 
 ## The Problem
 
-We are hopeing to plot spatial flows using `ggplot2` and then using `gganimate` to show changes through time. There are many ways to do this ouside `ggplot2` and there is already a `geom_curve()` functionthat creates a plot similar    
+We are hoping to plot spatial flows using `ggplot2` and then using `gganimate` to show changes through time. There are many ways to do this ouside `ggplot2` and there is already a `geom_curve()` functionthat creates a plot similar    
 
 
 ### Example Dataset
@@ -39,10 +39,12 @@ library(purrr)
 library(dplyr)
 library(sf)
 library(gganimate)
+library(geosphere)
 
 coords <- read_csv('data-raw/world.csv') %>% 
   filter(!is.na(admin)) %>%
   select(admin,
+         continent,
          x = Longitude, 
          y = Latitude)
 
@@ -58,6 +60,7 @@ flows <- map_df(list.files(path = "data-raw", pattern = "[0-9].csv", full.names 
 src <- coords %>%
   rename(reporter = admin)
 dst <- coords %>% 
+  select(-continent) %>%
   rename(partner = admin)
 
 # join coords to src and dst
@@ -69,6 +72,7 @@ df <- flows %>%
          partner != 'World')
 
 world1 <- sf::st_as_sf(maps::map('world', plot = FALSE, fill = TRUE))
+world2 <- sf::st_as_sf(maps::map('world', plot = FALSE, fill = TRUE, wrap = c(0,360)))
 
 ```
 
@@ -103,7 +107,6 @@ ggplot(df) +
 
 ```{r points}
 
-library(geosphere)
 #greatCircle(c(df$x_src[1], df$y_src[1]), c(df$x_dst[1], df$y_dst[1]), n=360, sp=FALSE)
 
 # finter to single month for now
@@ -147,12 +150,6 @@ ggplot() +
 ![](images/third_attempt.gif)
 
 
-```{r, eval = FALSE}
-
-filter(mar_pts, lat < )
-
-
-```
 
 ### Convert to SF object
 
@@ -200,14 +197,19 @@ The method is outlined below, but there is an issue with using `st_split()` on a
 src <- c(df$x_src[2], df$y_src[2])
 dst <- c(df$x_dst[2], df$y_dst[2])
 gc <- greatCircle(src, dst, n=16, sp=FALSE)
+gci <- gcIntermediate(src, dst, n=16, sp=FALSE)
 
-gcl = st_sfc(st_linestring(gc), crs = 4283)
+gc_l = st_sfc(st_linestring(gc), crs = 4283)
+gci_l = st_sfc(st_linestring(gci), crs = 4283)
+
+gc_long <- st_difference(gc_l, st_buffer(gci_l, 0.1))
+
+
 mp <- st_sfc(st_multipoint(rbind(src,dst)), crs = 4283)
 
 #mp2 = st_snap(mp, gcl, 1) # move points to intersect gcl line
 
 # then use st_split(gcl, mp2) but requires lwgeom which is not working on windows....
-
 
 ggplot() + 
   geom_sf(data = world1) +
@@ -215,4 +217,75 @@ ggplot() +
   geom_sf(data = mp, colour = "red", fill = "red", size = 10) +
   theme_void()
 
+```
+
+
+```{r, eval=FALSE}
+
+
+longway <- function(src, dst){
+  
+  pth <- gcIntermediate(src, dst, n=16, sp=FALSE, breakAtDateLine = F) # shortest path
+  
+  if (any(abs(pth[,'lat']) > 88)) {
+    gc <- greatCircle(src, dst, n=16, sp=FALSE)
+    
+    gc_l = st_sfc(st_linestring(gc), crs = 4283)
+    pth_l = st_sfc(st_linestring(pth), crs = 4283)
+    
+    return(st_sfc(st_difference(gc_l, st_buffer(pth_l, 0.1))))
+
+  } else {
+    
+    return(st_sfc(st_linestring(pth), crs = 4283))
+    
+  }
+    
+}
+
+mar_long <- mar %>%
+  rowwise() %>%
+  mutate(line = longway(src = c(x_src, y_src), dst = c(x_dst, y_dst))) %>%
+  st_as_sf(sf_column_name = 'line', crs = 4283)
+
+
+mapview::mapview(mar_long)@map
+```
+
+
+
+### Project and Reproject Method
+
+
+```{r}
+
+longway2 <- function(src, dst){
+  
+  srs <- '+proj=eqdc +lat_0=0 +lon_0=0 +lat_1=60 +lat_2=60 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs'
+  
+  names(src) <- names(dst) <- c('x', 'y')
+  
+  rbind(src, dst) %>% 
+    as.data.frame() %>%
+    st_as_sf(coords = c("x","y")) %>% 
+    st_set_crs(4326) %>%
+    st_transform(srs) %>%
+    st_coordinates() %>% 
+    st_linestring() %>%
+    st_segmentize(1e5) %>%
+    st_sfc(crs = srs) %>%
+    st_transform(4326)    
+  
+}
+
+mar_long2 <- mar %>%
+  rowwise() %>%
+  mutate(line = longway2(src = c(x_src, y_src), dst = c(x_dst, y_dst))) %>%
+  st_as_sf(sf_column_name = 'line')
+
+ggplot() + 
+  geom_sf(data = world1, size = 0.1) +
+  geom_sf(data = mar_long2, colour = 'darkred') +
+  #facet_wrap(~continent, ncol = 2) +
+  theme_void()
 ```
