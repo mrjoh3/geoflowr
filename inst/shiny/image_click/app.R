@@ -90,7 +90,15 @@ server <- function(input, output) {
   # check inputs and georeference
   observeEvent(input$btn, {
 
-    r <- brick('world.png')
+    filename <- 'world.png' # default not working
+
+    # check if file has been uploaded
+    if (!is.null(req(input$add_file))) {
+      filename <- input$add_file$datapath
+    }
+
+    r <- brick(filename)
+
     xy <<- cbind(img_pts$x[1:2],
                  nrow(r) - img_pts$y[1:2])
 
@@ -108,10 +116,28 @@ server <- function(input, output) {
 
   })
 
+  # observe file upload and render
   output$image <- renderImage({
-    filename <- 'world.png'
+
+    filename <- 'world.png' # default not working
+
+    # check if file has been uploaded
+    if (!is.null(req(input$add_file))) {
+      filename <- input$add_file$datapath
+    }
+
     list(src = filename)
   }, deleteFile = FALSE)
+
+  # Downloadable georeferenced image
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste('geoferenced', ".tif", sep = "")
+    },
+    content = function(file) {
+      write.csv(rfix, file)
+    }
+  )
 
 
 }
