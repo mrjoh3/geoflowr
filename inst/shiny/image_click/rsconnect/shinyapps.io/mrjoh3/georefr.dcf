@@ -1,0 +1,12 @@
+name: georefr
+title: georefr
+username:
+account: mrjoh3
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 593148
+bundleId: 1724604
+url: https://mrjoh3.shinyapps.io/georefr/
+when: 1543360145.43877
+asMultiple: FALSE
+asStatic: FALSE
