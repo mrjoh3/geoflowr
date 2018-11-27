@@ -15,28 +15,49 @@ ui <- fluidPage(
 
    # Application title
    titlePanel("Image Georeferencing"),
-   tags$p('Select points on the map and then click on the image. ',
-          'Pick a North East point first followed by a South West point. ',
-          'There is currently no error checking or validation. Then click ',
-          'the georeference button and wait. Close the app once complete; a raster called ',
-          'rfix will be in your environment. Plot this using: '),
-   tags$code('plotRGB(rfix);',
-             'maps::map(add = TRUE);',
-             'points(pts)'),
-   fluidRow(height = '600px',
-     column(6,
-            shiny::imageOutput('image', click = 'imageClick', height = '400px')),
-     column(6,
-            editModUI("editor", height = 600))
+   fluidRow(
+     column(2,
+            includeMarkdown('instructions.md')
+     ),
+     column(4,
+            h3("Import File to Georeference"),
+            wellPanel(
+              fileInput('add_file', 'Select File')
+            ),
+            downloadButton('download', 'Download Corrected Image')
+            ),
+   column(3,
+          h3('Parameters'),
+          tabsetPanel(type = "tabs",
+                      tabPanel('Georefernce Method',
+                               selectizeInput('method', 'Choose',
+                                              choices = c('No Click'= 1,
+                                                          '2 Click Image - Known Map Coordinates' = 2,
+                                                          '2 Click Image - 2 Click Map Coordinates' = 3
+                                              ),
+                                              selected = 3),
+                               numericInput('crs', 'Define CRS', 4283)),
+                      tabPanel('Known Spatial Information',
+                               sliderInput('x', 'X Max and Min', min = -180, max = 180, value = c(-90, 90)),
+                               sliderInput('y', 'Y Max and Min', min = -90, max = 90, value = c(-45, 45)))
+          )),
+   column(3,
+          actionButton('btn', 'Run Georeference'),
+          hr(),
+          h4('Image Clicks'),
+          tableOutput('img_clicks')
    ),
-   fluidRow(height = '100px',
-            column(6,
-                   tableOutput('img_clicks')),
-            column(6,
-                   actionButton('btn', 'Georeference'))
-   ),
-   fluidRow()
+   tags$hr()),
+   fluidRow(
+     column(8,
+            shiny::imageOutput('image', click = 'imageClick')),
+     column(4,
+            editModUI("editor", height = 500)),
+   tags$hr()),
+   fluidRow(column(12,
+                   plotOutput('corrected')))
 )
+
 
 
 server <- function(input, output) {
@@ -79,6 +100,11 @@ server <- function(input, output) {
       rfix  <<- setExtent(r, affinething::domath(pts, xy, r = r))
     })
 
+    output$corrected <- renderPlot({
+      plotRGB(rfix)
+      maps::map(add = TRUE)
+      points(pts)
+    })
 
   })
 
