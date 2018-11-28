@@ -70,7 +70,7 @@ function(input, output) {
   }, deleteFile = FALSE)
 
   # Downloadable georeferenced image
-  output$downloadData <- downloadHandler(
+  output$download <- downloadHandler(
     filename = function() {
       paste('geoferenced', ".tif", sep = "")
     },

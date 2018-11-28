@@ -1,9 +1,14 @@
 library(mapedit)
 library(mapview)
+library(maptools)
 library(shiny)
 library(raster)
 library(sf)
 library(affinething)
+
+library(sp)
+library(rgdal)
+library(rgeos)
 
 
 
