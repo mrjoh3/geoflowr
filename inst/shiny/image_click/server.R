@@ -49,10 +49,13 @@ function(input, output) {
     })
 
     # add to leaflet map
-    crs(rfix) <- "+proj=longlat +datum=WGS84"
+    #crs(rfix) <- "+proj=longlat +datum=WGS84"
+    #epsg3857 <- "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"
+    #map_raster <- raster(rfix)
+    #proj4string(map_raster) <- CRS("+init=epsg:3857")
 
-    leafletProxy('map-map') %>%
-      addRasterImage(raster(rfix), opacity = 0.8, project = FALSE)
+    #leafletProxy('map-map') %>%
+      #addRasterImage(raster(rfix), opacity = 0.8, project = FALSE)
 
     output$corrected <- renderPlot({
       plotRGB(rfix)

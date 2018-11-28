@@ -2,6 +2,12 @@ fluidPage(
 
   # Application title
   titlePanel("Image Georeferencing"),
+  # tags$head(tags$style(HTML("img {
+  #                                 border: 1;
+  #                                 max-width: 100%;
+  #                                 max-height: 100%;
+  #                               }")
+  #                      )),
   fluidRow(
     column(2,
            includeMarkdown('instructions.md')
