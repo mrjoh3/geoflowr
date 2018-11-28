@@ -24,7 +24,7 @@ fluidPage(
                                                                      '2 Click Image - 2 Click Map Coordinates' = 3
                                                          ),
                                                          selected = 3),
-                                          numericInput('crs', 'Define CRS', 4283))),
+                                          numericInput('crs', 'Define CRS', 3857))),
                        tabPanel('Known Spatial Information',
                                 wellPanel(style = "background: #ffe6e6",
                                           sliderInput('x', 'X Max and Min', min = -180, max = 180, value = c(-90, 90)),

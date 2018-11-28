@@ -5,7 +5,7 @@ function(input, output) {
   # record clicked points
   img_pts <- reactiveValues(x=NULL, y=NULL)
 
-  geo_pts <- callModule(editMod, "editor", map@map)
+  geo_pts <- callModule(editMod, "editor", map)
 
   # Listen for clicks
   observe({
@@ -47,6 +47,12 @@ function(input, output) {
     withProgress(message = 'Georeferencing Image', {
       rfix  <<- setExtent(r, affinething::domath(pts, xy, r = r))
     })
+
+    # add to leaflet map
+    crs(rfix) <- "+proj=longlat +datum=WGS84"
+
+    leafletProxy('map-map') %>%
+      addRasterImage(raster(rfix), opacity = 0.8, project = FALSE)
 
     output$corrected <- renderPlot({
       plotRGB(rfix)
