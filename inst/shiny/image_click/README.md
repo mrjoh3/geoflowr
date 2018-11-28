@@ -1,3 +1,7 @@
 ## GeorefR
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ropenscilabs/geoflowr/master?urlpath=inst/shiny/image_click/)
+development of this app has moved to:
+
+https://github.com/mrjoh3/georefr
+
+please submit feedback and issues at that location.
